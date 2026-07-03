@@ -5,16 +5,31 @@ from pydantic import BaseModel
 from melo.api import TTS
 from openvoice import se_extractor
 from openvoice.api import ToneColorConverter
+from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 
 class VoiceRequest(BaseModel):
     text: str
 
+# 1. Setup the checkpoint directories automatically
 ckpt_converter = 'checkpoints/converter'
-tone_color_converter = ToneColorConverter(f'{ckpt_converter}/config.json', device='cpu')
-tone_color_converter.load_checkpoint(f'{ckpt_converter}/checkpoint.pth')
+os.makedirs(ckpt_converter, exist_ok=True)
 
+pth_path = os.path.join(ckpt_converter, 'checkpoint.pth')
+json_path = os.path.join(ckpt_converter, 'config.json')
+
+# 2. Native URL-free downloading utility 
+if not os.path.exists(pth_path):
+    hf_hub_download(repo_id="myshell-ai/OpenVoice", filename="converter/checkpoint.pth", local_dir="checkpoints")
+if not os.path.exists(json_path):
+    hf_hub_download(repo_id="myshell-ai/OpenVoice", filename="converter/config.json", local_dir="checkpoints")
+
+# Load models into memory
+tone_color_converter = ToneColorConverter(json_path, device='cpu')
+tone_color_converter.load_checkpoint(pth_path)
+
+# Extract audio traits from your voice sample file
 target_se, audio_name = se_extractor.get_se('reference_speaker.wav', tone_color_converter, target_dir='processed')
 
 @app.get("/", response_class=HTMLResponse)
