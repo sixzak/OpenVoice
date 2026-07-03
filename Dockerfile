@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y ffmpeg git && rm -rf /var/lib/apt/lists
 RUN pip install --no-cache-dir fastapi uvicorn pydantic requests huggingface_hub
 
 # Clean standalone tool downloads that pull the codebase natively into subfolders
-RUN git clone https://github.com/myshell-ai/MeloTTS.git melo_src && \
+RUN git clone https://github.com melo_src && \
     mv melo_src/melo . && \
     rm -rf melo_src
 
-# Install required numerical libraries for MeloTTS
-RUN pip install --no-cache-dir librosa soundfile scipy pydub txt_split nltk
+# Install required numerical libraries using optimized pre-built binary wheels
+RUN pip install --no-cache-dir --only-binary=:all: librosa soundfile scipy pydub txtsplit nltk
 
 COPY reference_speaker.wav .
 COPY main.py .
