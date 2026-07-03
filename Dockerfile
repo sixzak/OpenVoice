@@ -2,10 +2,18 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Install system audio utilities along with the required C++ compilation tools
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-# Installs the official huggingface downloader tool natively
-RUN pip install fastapi uvicorn pydantic requests melotts huggingface_hub
+# Install packages with a relaxed setup structure to bypass breaking blocks
+RUN pip install --no-cache-dir fastapi uvicorn pydantic requests huggingface_hub
+RUN pip install --no-cache-dir melotts
 
 COPY reference_speaker.wav .
 COPY main.py .
